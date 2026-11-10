@@ -1,0 +1,7 @@
+# Grabaciones de clase pesadas (>100 MB limite de GitHub)
+*.mp4
+
+# Archivos temporales de Office y sistema
+~$*
+.DS_Store
+Thumbs.db
