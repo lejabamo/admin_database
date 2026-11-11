@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: COLLATION Y TABLESPACE EN POSTGRESQL (WINDOWS)
+-- Taller práctico: collation y tablespace en postgresql (windows)
 -- Sección 8: Limpieza del entorno
--- ============================================================================
 
 \c postgres
 
@@ -18,3 +16,4 @@ DROP TABLESPACE IF EXISTS ts_finance;
 DROP TABLESPACE IF EXISTS ts_sales;
 
 SELECT spcname FROM pg_tablespace;
+

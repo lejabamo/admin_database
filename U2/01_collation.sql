@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: COLLATION Y TABLESPACE EN POSTGRESQL (WINDOWS)
+-- Taller práctico: collation y tablespace en postgresql (windows)
 -- Parte 1: Collation
--- ============================================================================
 
 -- 3.2 Paso 1: Ver collations disponibles
 SELECT collname, collencoding, collcollate, collctype
@@ -111,3 +109,4 @@ SELECT nombre, COUNT(*)
 FROM usuarios_empresa
 GROUP BY nombre
 ORDER BY COUNT(*) DESC;
+

@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: GESTIÓN DE USUARIOS, ROLES Y PERMISOS EN POSTGRESQL
+-- Taller práctico: gestión de usuarios, roles y permisos en postgresql
 -- Secciones 3 a 9: Gestión de Roles, Escenario Empresarial y Auditoría
--- ============================================================================
 
 \c postgres
 
@@ -142,3 +140,4 @@ ALTER ROLE usuario_app CONNECTION LIMIT 10;
 SELECT rolname, rolconnlimit, rolvaliduntil
 FROM pg_roles
 WHERE rolname = 'usuario_app';
+

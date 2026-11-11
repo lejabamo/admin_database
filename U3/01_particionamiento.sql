@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER: PARTICIONAMIENTO Y CARGA DE DATOS EN POSTGRESQL 15+
+-- Taller: particionamiento y carga de datos en postgresql 15+
 -- Parte 1: Particionamiento (Pasos 1 a 9)
--- ============================================================================
 
 \c postgres
 DROP DATABASE IF EXISTS taller_particiones;

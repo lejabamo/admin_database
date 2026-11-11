@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: COLLATION Y TABLESPACE EN POSTGRESQL (WINDOWS)
+-- Taller práctico: collation y tablespace en postgresql (windows)
 -- Parte 2: Tablespaces
--- ============================================================================
 
 \c pedidos_es
 
@@ -95,3 +93,4 @@ SELECT schemaname, tablename, tablespace,
 FROM pg_tables
 WHERE tablespace IS NOT NULL
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+

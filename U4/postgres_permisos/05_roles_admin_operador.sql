@@ -1,4 +1,3 @@
--- =====================================================================
 -- 05_ROLES_ADMIN_OPERADOR.SQL
 -- Roles de ADMINISTRADOR (DBA) y OPERADOR de base de datos,
 -- SIN usar SUPERUSER.
@@ -17,13 +16,10 @@
 --   pg_write_all_data  INSERT/UPDATE/DELETE en todo (PG14+)
 --   pg_checkpoint      ejecutar CHECKPOINT (PG15+)
 --   pg_maintain        VACUUM/ANALYZE/REINDEX/CLUSTER en todo (PG17+)
--- =====================================================================
 
 \connect mydatabase
 
--- =====================================================================
 -- A. ROL OPERADOR
--- =====================================================================
 CREATE ROLE rol_operador NOLOGIN;
 
 GRANT CONNECT, TEMPORARY ON DATABASE mydatabase TO rol_operador;
@@ -48,16 +44,12 @@ GRANT pg_checkpoint TO rol_operador;
 -- o en todo el clúster:
 -- GRANT pg_maintain TO rol_operador;
 
--- =====================================================================
 -- B. ROL BACKUP (para pg_dump)
--- =====================================================================
 CREATE ROLE rol_backup NOLOGIN;
 GRANT CONNECT ON DATABASE mydatabase TO rol_backup;
 GRANT pg_read_all_data TO rol_backup;          -- PG14+
 
--- =====================================================================
 -- C. ROL ADMINISTRADOR (DBA)
--- =====================================================================
 CREATE ROLE rol_dba_admin NOLOGIN;
 
 -- 1. Todos los privilegios sobre la base, pudiendo delegarlos

@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER: PARTICIONAMIENTO Y CARGA DE DATOS EN POSTGRESQL 15+
+-- Taller: particionamiento y carga de datos en postgresql 15+
 -- Parte 2: INSERT fila a fila vs. en lotes vs. COPY (Pasos 10 a 13)
--- ============================================================================
 
 \c taller_particiones
 \timing on

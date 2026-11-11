@@ -1,0 +1,882 @@
+-----------------------------------------------------------------
+1. Consulta de Reservas por Rango de Fechas con Agregaciones
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=512.17..512.20 rows=15 width=67) (actual time=1.356..1.357 rows=13 loops=1)
+   Sort Key: (count(b.bookid)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=156
+   ->  GroupAggregate  (cost=509.62..511.87 rows=15 width=67) (actual time=1.296..1.315 rows=13 loops=1)
+         Group Key: f.facid
+         Filter: (count(b.bookid) > 3)
+         Rows Removed by Filter: 11
+         Buffers: shared hit=153
+         ->  Sort  (cost=509.62..509.94 rows=126 width=27) (actual time=1.276..1.281 rows=128 loops=1)
+               Sort Key: f.facid
+               Sort Method: quicksort  Memory: 32kB
+               Buffers: shared hit=153
+               ->  Hash Join  (cost=2.01..505.23 rows=126 width=27) (actual time=0.725..1.252 rows=128 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=150
+                     ->  Seq Scan on bookings b  (cost=0.00..502.85 rows=126 width=12) (actual time=0.684..1.198 rows=128 loops=1)
+                           Filter: ((starttime >= '2025-03-03 00:00:00'::timestamp without time zone) AND (starttime <= '2025-03-09 23:59:59'::timestamp without time zone) AND (slots > 2))
+                           Rows Removed by Filter: 20092
+                           Buffers: shared hit=149
+                     ->  Hash  (cost=1.45..1.45 rows=45 width=19) (actual time=0.023..0.023 rows=45 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=19) (actual time=0.011..0.014 rows=45 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=172
+ Planning Time: 4.007 ms
+ Execution Time: 1.452 ms
+(29 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_starttime_slots ON bookings (starttime, slots);
+ANALYZE bookings;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                                           QUERY PLAN                                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=169.77..169.81 rows=15 width=67) (actual time=0.178..0.179 rows=13 loops=1)
+   Sort Key: (count(b.bookid)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=11
+   ->  HashAggregate  (cost=168.81..169.48 rows=15 width=67) (actual time=0.148..0.153 rows=13 loops=1)
+         Group Key: f.facid
+         Filter: (count(b.bookid) > 3)
+         Batches: 1  Memory Usage: 24kB
+         Rows Removed by Filter: 11
+         Buffers: shared hit=8
+         ->  Hash Join  (cost=15.33..167.55 rows=126 width=27) (actual time=0.078..0.114 rows=128 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=8
+               ->  Bitmap Heap Scan on bookings b  (cost=13.32..165.17 rows=126 width=12) (actual time=0.037..0.056 rows=128 loops=1)
+                     Recheck Cond: ((starttime >= '2025-03-03 00:00:00'::timestamp without time zone) AND (starttime <= '2025-03-09 23:59:59'::timestamp without time zone) AND (slots > 2))
+                     Heap Blocks: exact=4
+                     Buffers: shared hit=7
+                     ->  Bitmap Index Scan on idx_bookings_starttime_slots  (cost=0.00..13.29 rows=126 width=0) (actual time=0.029..0.029 rows=128 loops=1)
+                           Index Cond: ((starttime >= '2025-03-03 00:00:00'::timestamp without time zone) AND (starttime <= '2025-03-09 23:59:59'::timestamp without time zone) AND (slots > 2))
+                           Buffers: shared hit=3
+               ->  Hash  (cost=1.45..1.45 rows=45 width=19) (actual time=0.027..0.028 rows=45 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=19) (actual time=0.015..0.017 rows=45 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=209
+ Planning Time: 4.431 ms
+ Execution Time: 0.266 ms
+(29 filas)
+
+
+
+
+-----------------------------------------------------------------
+2. Búsqueda de Miembros con Patrones de Texto y Recomendaciones
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                                        QUERY PLAN                                                                                        
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=426.81..427.12 rows=124 width=36) (actual time=2.843..2.847 rows=3 loops=1)
+   Sort Key: (count(b.bookid)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=158
+   ->  HashAggregate  (cost=421.26..422.50 rows=124 width=36) (actual time=2.809..2.814 rows=3 loops=1)
+         Group Key: m1.memid, m2.firstname, m2.surname
+         Batches: 1  Memory Usage: 40kB
+         Buffers: shared hit=155
+         ->  Hash Left Join  (cost=12.23..418.65 rows=261 width=32) (actual time=0.469..2.746 rows=122 loops=1)
+               Hash Cond: (m1.recommendedby = m2.memid)
+               Buffers: shared hit=155
+               ->  Hash Right Join  (cost=5.74..411.46 rows=261 width=24) (actual time=0.430..2.680 rows=122 loops=1)
+                     Hash Cond: (b.memid = m1.memid)
+                     Buffers: shared hit=152
+                     ->  Seq Scan on bookings b  (cost=0.00..351.20 rows=20220 width=8) (actual time=0.007..1.191 rows=20220 loops=1)
+                           Buffers: shared hit=149
+                     ->  Hash  (cost=5.71..5.71 rows=2 width=20) (actual time=0.033..0.034 rows=3 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=3
+                           ->  Seq Scan on members m1  (cost=0.00..5.71 rows=2 width=20) (actual time=0.025..0.031 rows=3 loops=1)
+                                 Filter: ((joindate > '2024-01-01 00:00:00'::timestamp without time zone) AND (((surname)::text ~~ 'Smith%'::text) OR ((firstname)::text ~~ 'J%'::text)))
+                                 Rows Removed by Filter: 152
+                                 Buffers: shared hit=3
+               ->  Hash  (cost=4.55..4.55 rows=155 width=16) (actual time=0.029..0.029 rows=155 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 16kB
+                     Buffers: shared hit=3
+                     ->  Seq Scan on members m2  (cost=0.00..4.55 rows=155 width=16) (actual time=0.004..0.013 rows=155 loops=1)
+                           Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=189
+ Planning Time: 4.870 ms
+ Execution Time: 2.959 ms
+(32 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_memid ON bookings (memid);
+ANALYZE bookings;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                                        QUERY PLAN                                                                                        
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=307.80..308.11 rows=124 width=36) (actual time=0.460..0.461 rows=3 loops=1)
+   Sort Key: (count(b.bookid)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=114
+   ->  HashAggregate  (cost=302.25..303.49 rows=124 width=36) (actual time=0.431..0.433 rows=3 loops=1)
+         Group Key: m1.memid, m2.firstname, m2.surname
+         Batches: 1  Memory Usage: 40kB
+         Buffers: shared hit=111
+         ->  Nested Loop Left Join  (cost=11.03..299.64 rows=261 width=32) (actual time=0.071..0.381 rows=122 loops=1)
+               Buffers: shared hit=111
+               ->  Hash Right Join  (cost=5.74..11.07 rows=2 width=28) (actual time=0.050..0.067 rows=3 loops=1)
+                     Hash Cond: (m2.memid = m1.recommendedby)
+                     Buffers: shared hit=6
+                     ->  Seq Scan on members m2  (cost=0.00..4.55 rows=155 width=16) (actual time=0.003..0.009 rows=155 loops=1)
+                           Buffers: shared hit=3
+                     ->  Hash  (cost=5.71..5.71 rows=2 width=20) (actual time=0.036..0.036 rows=3 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=3
+                           ->  Seq Scan on members m1  (cost=0.00..5.71 rows=2 width=20) (actual time=0.024..0.030 rows=3 loops=1)
+                                 Filter: ((joindate > '2024-01-01 00:00:00'::timestamp without time zone) AND (((surname)::text ~~ 'Smith%'::text) OR ((firstname)::text ~~ 'J%'::text)))
+                                 Rows Removed by Filter: 152
+                                 Buffers: shared hit=3
+               ->  Bitmap Heap Scan on bookings b  (cost=5.29..142.98 rows=130 width=8) (actual time=0.011..0.094 rows=41 loops=3)
+                     Recheck Cond: (m1.memid = memid)
+                     Heap Blocks: exact=99
+                     Buffers: shared hit=105
+                     ->  Bitmap Index Scan on idx_bookings_memid  (cost=0.00..5.26 rows=130 width=0) (actual time=0.006..0.006 rows=41 loops=3)
+                           Index Cond: (memid = m1.memid)
+                           Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=208
+ Planning Time: 3.735 ms
+ Execution Time: 0.558 ms
+(33 filas)
+
+
+
+
+-----------------------------------------------------------------
+3. Análisis de Costos vs Utilización
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                               QUERY PLAN                                                               
+----------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=459.77..459.81 rows=15 width=68) (actual time=1.411..1.412 rows=2 loops=1)
+   Sort Key: (sum(CASE WHEN (b.memid = 0) THEN (f.guestcost * (b.slots)::numeric) ELSE (f.membercost * (b.slots)::numeric) END)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=153
+   ->  HashAggregate  (cost=458.80..459.48 rows=15 width=68) (actual time=1.377..1.378 rows=2 loops=1)
+         Group Key: f.facid
+         Filter: (sum(b.slots) > 10)
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=150
+         ->  Hash Join  (cost=2.01..454.82 rows=177 width=40) (actual time=1.173..1.331 rows=111 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=150
+               ->  Seq Scan on bookings b  (cost=0.00..452.30 rows=177 width=16) (actual time=1.137..1.278 rows=111 loops=1)
+                     Filter: ((facid = ANY ('{4,5}'::integer[])) AND (starttime >= '2025-05-30 00:00:00'::timestamp without time zone))
+                     Rows Removed by Filter: 20109
+                     Buffers: shared hit=149
+               ->  Hash  (cost=1.45..1.45 rows=45 width=28) (actual time=0.023..0.023 rows=45 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=28) (actual time=0.011..0.014 rows=45 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=178
+ Planning Time: 3.352 ms
+ Execution Time: 1.472 ms
+(25 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_facid_starttime ON bookings (facid, starttime);
+ANALYZE bookings;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=177.20..177.23 rows=15 width=68) (actual time=0.208..0.209 rows=2 loops=1)
+   Sort Key: (sum(CASE WHEN (b.memid = 0) THEN (f.guestcost * (b.slots)::numeric) ELSE (f.membercost * (b.slots)::numeric) END)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=25
+   ->  HashAggregate  (cost=176.23..176.90 rows=15 width=68) (actual time=0.185..0.186 rows=2 loops=1)
+         Group Key: f.facid
+         Filter: (sum(b.slots) > 10)
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=22
+         ->  Hash Join  (cost=12.39..172.25 rows=177 width=40) (actual time=0.065..0.140 rows=111 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=22
+               ->  Bitmap Heap Scan on bookings b  (cost=10.38..169.72 rows=177 width=16) (actual time=0.031..0.086 rows=111 loops=1)
+                     Recheck Cond: ((facid = ANY ('{4,5}'::integer[])) AND (starttime >= '2025-05-30 00:00:00'::timestamp without time zone))
+                     Heap Blocks: exact=17
+                     Buffers: shared hit=21
+                     ->  Bitmap Index Scan on idx_bookings_facid_starttime  (cost=0.00..10.33 rows=177 width=0) (actual time=0.024..0.024 rows=111 loops=1)
+                           Index Cond: ((facid = ANY ('{4,5}'::integer[])) AND (starttime >= '2025-05-30 00:00:00'::timestamp without time zone))
+                           Buffers: shared hit=4
+               ->  Hash  (cost=1.45..1.45 rows=45 width=28) (actual time=0.023..0.023 rows=45 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=28) (actual time=0.011..0.015 rows=45 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=209
+ Planning Time: 6.174 ms
+ Execution Time: 0.293 ms
+(28 filas)
+
+
+
+
+-----------------------------------------------------------------
+4. Consulta de Miembros Activos por Zona Geográfica
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=466.64..466.65 rows=3 width=52) (actual time=1.403..1.405 rows=5 loops=1)
+   Sort Key: (count(b.bookid)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=159
+   ->  GroupAggregate  (cost=465.97..466.62 rows=3 width=52) (actual time=1.374..1.381 rows=5 loops=1)
+         Group Key: m.zipcode
+         Filter: (count(b.bookid) > 1)
+         Rows Removed by Filter: 3
+         Buffers: shared hit=156
+         ->  Sort  (cost=465.97..466.07 rows=40 width=16) (actual time=1.357..1.359 rows=30 loops=1)
+               Sort Key: m.zipcode, m.memid
+               Sort Method: quicksort  Memory: 26kB
+               Buffers: shared hit=156
+               ->  Hash Join  (cost=7.20..464.90 rows=40 width=16) (actual time=0.745..1.339 rows=30 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=153
+                     ->  Hash Join  (cost=5.45..462.80 rows=121 width=20) (actual time=0.700..1.303 rows=72 loops=1)
+                           Hash Cond: (b.memid = m.memid)
+                           Buffers: shared hit=152
+                           ->  Seq Scan on bookings b  (cost=0.00..452.30 rows=1874 width=16) (actual time=0.660..1.193 rows=1861 loops=1)
+                                 Filter: ((starttime >= '2025-03-01 00:00:00'::timestamp without time zone) AND (starttime <= '2025-03-31 00:00:00'::timestamp without time zone))
+                                 Rows Removed by Filter: 18359
+                                 Buffers: shared hit=149
+                           ->  Hash  (cost=5.32..5.32 rows=10 width=8) (actual time=0.026..0.027 rows=8 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 Buffers: shared hit=3
+                                 ->  Seq Scan on members m  (cost=0.00..5.32 rows=10 width=8) (actual time=0.018..0.022 rows=8 loops=1)
+                                       Filter: ((joindate >= '2024-01-01 00:00:00'::timestamp without time zone) AND (joindate <= '2024-12-31 00:00:00'::timestamp without time zone))
+                                       Rows Removed by Filter: 147
+                                       Buffers: shared hit=3
+                     ->  Hash  (cost=1.56..1.56 rows=15 width=4) (actual time=0.021..0.021 rows=15 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=15 width=4) (actual time=0.012..0.016 rows=15 loops=1)
+                                 Filter: (membercost >= '5'::numeric)
+                                 Rows Removed by Filter: 30
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=201
+ Planning Time: 5.100 ms
+ Execution Time: 1.470 ms
+(41 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_starttime_memid ON bookings (starttime, memid);
+CREATE INDEX idx_members_joindate ON members (joindate);
+ANALYZE bookings;
+ANALYZE members;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=242.95..242.96 rows=3 width=52) (actual time=0.443..0.444 rows=5 loops=1)
+   Sort Key: (count(b.bookid)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=34
+   ->  GroupAggregate  (cost=242.27..242.92 rows=3 width=52) (actual time=0.408..0.415 rows=5 loops=1)
+         Group Key: m.zipcode
+         Filter: (count(b.bookid) > 1)
+         Rows Removed by Filter: 3
+         Buffers: shared hit=31
+         ->  Sort  (cost=242.27..242.37 rows=40 width=16) (actual time=0.392..0.394 rows=30 loops=1)
+               Sort Key: m.zipcode, m.memid
+               Sort Method: quicksort  Memory: 26kB
+               Buffers: shared hit=31
+               ->  Hash Join  (cost=58.70..241.21 rows=40 width=16) (actual time=0.186..0.375 rows=30 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=28
+                     ->  Hash Join  (cost=56.95..239.11 rows=121 width=20) (actual time=0.137..0.334 rows=72 loops=1)
+                           Hash Cond: (b.memid = m.memid)
+                           Buffers: shared hit=27
+                           ->  Bitmap Heap Scan on bookings b  (cost=51.50..228.61 rows=1874 width=16) (actual time=0.095..0.211 rows=1861 loops=1)
+                                 Recheck Cond: ((starttime >= '2025-03-01 00:00:00'::timestamp without time zone) AND (starttime <= '2025-03-31 00:00:00'::timestamp without time zone))
+                                 Heap Blocks: exact=15
+                                 Buffers: shared hit=24
+                                 ->  Bitmap Index Scan on idx_bookings_starttime_memid  (cost=0.00..51.03 rows=1874 width=0) (actual time=0.087..0.087 rows=1861 loops=1)
+                                       Index Cond: ((starttime >= '2025-03-01 00:00:00'::timestamp without time zone) AND (starttime <= '2025-03-31 00:00:00'::timestamp without time zone))
+                                       Buffers: shared hit=9
+                           ->  Hash  (cost=5.32..5.32 rows=10 width=8) (actual time=0.030..0.030 rows=8 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 Buffers: shared hit=3
+                                 ->  Seq Scan on members m  (cost=0.00..5.32 rows=10 width=8) (actual time=0.021..0.026 rows=8 loops=1)
+                                       Filter: ((joindate >= '2024-01-01 00:00:00'::timestamp without time zone) AND (joindate <= '2024-12-31 00:00:00'::timestamp without time zone))
+                                       Rows Removed by Filter: 147
+                                       Buffers: shared hit=3
+                     ->  Hash  (cost=1.56..1.56 rows=15 width=4) (actual time=0.024..0.024 rows=15 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=15 width=4) (actual time=0.013..0.017 rows=15 loops=1)
+                                 Filter: (membercost >= '5'::numeric)
+                                 Rows Removed by Filter: 30
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=248
+ Planning Time: 6.962 ms
+ Execution Time: 0.551 ms
+(44 filas)
+
+
+
+
+-----------------------------------------------------------------
+5. Análisis Temporal de Horarios Pico
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                              QUERY PLAN                                                               
+---------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=562.45..562.52 rows=28 width=127) (actual time=2.816..2.818 rows=6 loops=1)
+   Sort Key: (sum(b.slots)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=159
+   ->  GroupAggregate  (cost=558.87..561.78 rows=28 width=127) (actual time=2.527..2.768 rows=6 loops=1)
+         Group Key: (EXTRACT(hour FROM b.starttime)), (EXTRACT(dow FROM b.starttime)), f.name
+         Filter: (count(b.bookid) > 1)
+         Rows Removed by Filter: 419
+         Buffers: shared hit=156
+         ->  Sort  (cost=558.87..559.09 rows=85 width=87) (actual time=2.478..2.498 rows=431 loops=1)
+               Sort Key: (EXTRACT(hour FROM b.starttime)), (EXTRACT(dow FROM b.starttime)), f.name
+               Sort Method: quicksort  Memory: 50kB
+               Buffers: shared hit=156
+               ->  Hash Join  (cost=2.04..556.15 rows=85 width=87) (actual time=1.334..1.858 rows=431 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=150
+                     ->  Seq Scan on bookings b  (cost=0.00..553.40 rows=101 width=20) (actual time=1.274..1.658 rows=521 loops=1)
+                           Filter: (((starttime)::date >= '2025-05-12'::date) AND ((starttime)::date <= '2025-05-18'::date))
+                           Rows Removed by Filter: 19699
+                           Buffers: shared hit=149
+                     ->  Hash  (cost=1.56..1.56 rows=38 width=19) (actual time=0.035..0.035 rows=38 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=38 width=19) (actual time=0.016..0.023 rows=38 loops=1)
+                                 Filter: (membercost <= '10'::numeric)
+                                 Rows Removed by Filter: 7
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=252
+ Planning Time: 5.019 ms
+ Execution Time: 2.950 ms
+(31 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_starttime_date ON bookings (CAST(starttime AS DATE));
+ANALYZE bookings;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                           QUERY PLAN                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=51.02..51.43 rows=161 width=127) (actual time=0.551..0.552 rows=6 loops=1)
+   Sort Key: (sum(b.slots)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=11
+   ->  HashAggregate  (cost=37.07..45.12 rows=161 width=127) (actual time=0.442..0.528 rows=6 loops=1)
+         Group Key: EXTRACT(hour FROM b.starttime), EXTRACT(dow FROM b.starttime), f.name
+         Filter: (count(b.bookid) > 1)
+         Batches: 1  Memory Usage: 169kB
+         Rows Removed by Filter: 419
+         Buffers: shared hit=8
+         ->  Hash Join  (cost=2.33..29.83 rows=483 width=87) (actual time=0.060..0.247 rows=431 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=8
+               ->  Index Scan using idx_bookings_starttime_date on bookings b  (cost=0.29..23.73 rows=572 width=20) (actual time=0.018..0.072 rows=521 loops=1)
+                     Index Cond: (((starttime)::date >= '2025-05-12'::date) AND ((starttime)::date <= '2025-05-18'::date))
+                     Buffers: shared hit=7
+               ->  Hash  (cost=1.56..1.56 rows=38 width=19) (actual time=0.023..0.024 rows=38 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=38 width=19) (actual time=0.011..0.015 rows=38 loops=1)
+                           Filter: (membercost <= '10'::numeric)
+                           Rows Removed by Filter: 7
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=296
+ Planning Time: 4.643 ms
+ Execution Time: 0.663 ms
+(27 filas)
+
+
+
+
+-----------------------------------------------------------------
+6. Consulta de Relaciones de Recomendación Recursiva
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                   QUERY PLAN                                                                   
+------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=559.99..564.76 rows=60 width=28) (actual time=1.329..1.333 rows=3 loops=1)
+   Group Key: r.nivel
+   Filter: (count(b.bookid) > 0)
+   Buffers: shared hit=165
+   CTE recomendaciones
+     ->  Recursive Union  (cost=0.00..63.56 rows=181 width=24) (actual time=0.010..0.092 rows=11 loops=1)
+           Buffers: shared hit=12
+           ->  Seq Scan on members  (cost=0.00..4.94 rows=1 width=24) (actual time=0.010..0.020 rows=1 loops=1)
+                 Filter: (memid = 13)
+                 Rows Removed by Filter: 154
+                 Buffers: shared hit=3
+           ->  Hash Join  (cost=0.33..5.68 rows=18 width=24) (actual time=0.013..0.021 rows=3 loops=3)
+                 Hash Cond: (m.recommendedby = r_1.memid)
+                 Buffers: shared hit=9
+                 ->  Seq Scan on members m  (cost=0.00..4.55 rows=155 width=20) (actual time=0.001..0.006 rows=155 loops=3)
+                       Buffers: shared hit=9
+                 ->  Hash  (cost=0.20..0.20 rows=10 width=8) (actual time=0.002..0.002 rows=4 loops=3)
+                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                       ->  WorkTable Scan on recomendaciones r_1  (cost=0.00..0.20 rows=10 width=8) (actual time=0.000..0.001 rows=4 loops=3)
+   ->  Sort  (cost=496.43..496.93 rows=200 width=16) (actual time=1.323..1.324 rows=7 loops=1)
+         Sort Key: r.nivel, r.memid
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=165
+         ->  Hash Join  (cost=7.90..488.79 rows=200 width=16) (actual time=1.187..1.298 rows=7 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=162
+               ->  Hash Join  (cost=5.88..486.21 rows=200 width=20) (actual time=1.116..1.226 rows=7 loops=1)
+                     Hash Cond: (b.memid = r.memid)
+                     Buffers: shared hit=161
+                     ->  Seq Scan on bookings b  (cost=0.00..477.57 rows=200 width=16) (actual time=0.956..1.108 rows=131 loops=1)
+                           Filter: ((starttime >= '2025-06-01 00:00:00'::timestamp without time zone) AND (facid = ANY ('{1,3,5}'::integer[])))
+                           Rows Removed by Filter: 20089
+                           Buffers: shared hit=149
+                     ->  Hash  (cost=3.62..3.62 rows=181 width=8) (actual time=0.101..0.101 rows=11 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=12
+                           ->  CTE Scan on recomendaciones r  (cost=0.00..3.62 rows=181 width=8) (actual time=0.012..0.096 rows=11 loops=1)
+                                 Buffers: shared hit=12
+               ->  Hash  (cost=1.45..1.45 rows=45 width=4) (actual time=0.023..0.023 rows=45 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=4) (actual time=0.016..0.018 rows=45 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=181
+ Planning Time: 6.472 ms
+ Execution Time: 1.428 ms
+(47 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_facid_starttime ON bookings (facid, starttime);
+CREATE INDEX idx_members_recommendedby ON members (recommendedby);
+ANALYZE bookings;
+ANALYZE members;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                            QUERY PLAN                                                                            
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=257.52..262.28 rows=60 width=28) (actual time=0.327..0.329 rows=3 loops=1)
+   Group Key: r.nivel
+   Filter: (count(b.bookid) > 0)
+   Buffers: shared hit=38
+   CTE recomendaciones
+     ->  Recursive Union  (cost=0.00..63.56 rows=181 width=24) (actual time=0.011..0.096 rows=11 loops=1)
+           Buffers: shared hit=12
+           ->  Seq Scan on members  (cost=0.00..4.94 rows=1 width=24) (actual time=0.010..0.022 rows=1 loops=1)
+                 Filter: (memid = 13)
+                 Rows Removed by Filter: 154
+                 Buffers: shared hit=3
+           ->  Hash Join  (cost=0.33..5.68 rows=18 width=24) (actual time=0.013..0.021 rows=3 loops=3)
+                 Hash Cond: (m.recommendedby = r_1.memid)
+                 Buffers: shared hit=9
+                 ->  Seq Scan on members m  (cost=0.00..4.55 rows=155 width=20) (actual time=0.001..0.006 rows=155 loops=3)
+                       Buffers: shared hit=9
+                 ->  Hash  (cost=0.20..0.20 rows=10 width=8) (actual time=0.002..0.002 rows=4 loops=3)
+                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                       ->  WorkTable Scan on recomendaciones r_1  (cost=0.00..0.20 rows=10 width=8) (actual time=0.000..0.000 rows=4 loops=3)
+   ->  Sort  (cost=193.96..194.46 rows=200 width=16) (actual time=0.320..0.321 rows=7 loops=1)
+         Sort Key: r.nivel, r.memid
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=38
+         ->  Hash Join  (cost=22.82..186.31 rows=200 width=16) (actual time=0.200..0.240 rows=7 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=35
+               ->  Hash Join  (cost=20.80..183.73 rows=200 width=20) (actual time=0.166..0.205 rows=7 loops=1)
+                     Hash Cond: (b.memid = r.memid)
+                     Buffers: shared hit=34
+                     ->  Bitmap Heap Scan on bookings b  (cost=14.92..175.10 rows=200 width=16) (actual time=0.034..0.086 rows=131 loops=1)
+                           Recheck Cond: ((facid = ANY ('{1,3,5}'::integer[])) AND (starttime >= '2025-06-01 00:00:00'::timestamp without time zone))
+                           Heap Blocks: exact=16
+                           Buffers: shared hit=22
+                           ->  Bitmap Index Scan on idx_bookings_facid_starttime  (cost=0.00..14.87 rows=200 width=0) (actual time=0.027..0.027 rows=131 loops=1)
+                                 Index Cond: ((facid = ANY ('{1,3,5}'::integer[])) AND (starttime >= '2025-06-01 00:00:00'::timestamp without time zone))
+                                 Buffers: shared hit=6
+                     ->  Hash  (cost=3.62..3.62 rows=181 width=8) (actual time=0.104..0.104 rows=11 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=12
+                           ->  CTE Scan on recomendaciones r  (cost=0.00..3.62 rows=181 width=8) (actual time=0.012..0.099 rows=11 loops=1)
+                                 Buffers: shared hit=12
+               ->  Hash  (cost=1.45..1.45 rows=45 width=4) (actual time=0.022..0.022 rows=45 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=4) (actual time=0.012..0.013 rows=45 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=225
+ Planning Time: 6.486 ms
+ Execution Time: 0.483 ms
+(50 filas)
+
+
+
+
+-----------------------------------------------------------------
+7. Análisis de Rentabilidad por Instalación
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                              QUERY PLAN                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=466.72..466.73 rows=2 width=77) (actual time=1.480..1.481 rows=6 loops=1)
+   Sort Key: ((sum(CASE WHEN (b.memid = 0) THEN (f.guestcost * (b.slots)::numeric) ELSE (f.membercost * (b.slots)::numeric) END) - f.monthlymaintenance)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=153
+   ->  HashAggregate  (cost=466.62..466.71 rows=2 width=77) (actual time=1.427..1.429 rows=6 loops=1)
+         Group Key: f.facid
+         Filter: (sum(b.slots) > 20)
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=150
+         ->  Hash Join  (cost=1.64..460.14 rows=288 width=50) (actual time=0.924..1.344 rows=284 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=150
+               ->  Seq Scan on bookings b  (cost=0.00..452.30 rows=2158 width=16) (actual time=0.854..1.153 rows=2171 loops=1)
+                     Filter: ((starttime >= '2025-05-01 00:00:00'::timestamp without time zone) AND (starttime < '2025-06-01 00:00:00'::timestamp without time zone))
+                     Rows Removed by Filter: 18049
+                     Buffers: shared hit=149
+               ->  Hash  (cost=1.56..1.56 rows=6 width=38) (actual time=0.033..0.033 rows=6 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=6 width=38) (actual time=0.015..0.019 rows=6 loops=1)
+                           Filter: (initialoutlay > '9000'::numeric)
+                           Rows Removed by Filter: 39
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=188
+ Planning Time: 3.665 ms
+ Execution Time: 1.582 ms
+(27 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_covering_ej7 ON bookings (facid, starttime) INCLUDE (bookid, slots, memid);
+VACUUM ANALYZE bookings;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                                           QUERY PLAN                                                                                           
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=43.23..43.24 rows=2 width=77) (actual time=0.267..0.267 rows=6 loops=1)
+   Sort Key: ((sum(CASE WHEN (b.memid = 0) THEN (f.guestcost * (b.slots)::numeric) ELSE (f.membercost * (b.slots)::numeric) END) - f.monthlymaintenance)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=18
+   ->  HashAggregate  (cost=43.13..43.22 rows=2 width=77) (actual time=0.239..0.241 rows=6 loops=1)
+         Group Key: f.facid
+         Filter: (sum(b.slots) > 20)
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=15
+         ->  Nested Loop  (cost=0.29..36.65 rows=288 width=50) (actual time=0.079..0.157 rows=284 loops=1)
+               Buffers: shared hit=15
+               ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=6 width=38) (actual time=0.013..0.017 rows=6 loops=1)
+                     Filter: (initialoutlay > '9000'::numeric)
+                     Rows Removed by Filter: 39
+                     Buffers: shared hit=1
+               ->  Index Only Scan using idx_bookings_covering_ej7 on bookings b  (cost=0.29..5.37 rows=48 width=16) (actual time=0.016..0.019 rows=47 loops=6)
+                     Index Cond: ((facid = f.facid) AND (starttime >= '2025-05-01 00:00:00'::timestamp without time zone) AND (starttime < '2025-06-01 00:00:00'::timestamp without time zone))
+                     Heap Fetches: 0
+                     Buffers: shared hit=14
+ Planning:
+   Buffers: shared hit=228
+ Planning Time: 4.637 ms
+ Execution Time: 0.330 ms
+(23 filas)
+
+
+
+
+-----------------------------------------------------------------
+8. Consulta de Miembros por Patrón de Uso
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                 QUERY PLAN                                                                  
+---------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=418.08..418.09 rows=1 width=88) (actual time=2.651..2.654 rows=5 loops=1)
+   Sort Key: (sum(b.slots)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=159
+   ->  GroupAggregate  (cost=416.09..418.07 rows=1 width=88) (actual time=2.592..2.608 rows=5 loops=1)
+         Group Key: m.memid
+         Filter: ((count(b.bookid) >= 3) AND (count(DISTINCT b.facid) > 1))
+         Buffers: shared hit=156
+         ->  Sort  (cost=416.09..416.37 rows=110 width=44) (actual time=2.558..2.563 rows=148 loops=1)
+               Sort Key: m.memid, b.facid
+               Sort Method: quicksort  Memory: 36kB
+               Buffers: shared hit=156
+               ->  Hash Join  (cost=7.12..412.36 rows=110 width=44) (actual time=1.282..2.476 rows=148 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=153
+                     ->  Hash Join  (cost=4.97..409.84 rows=130 width=44) (actual time=1.213..2.376 rows=180 loops=1)
+                           Hash Cond: (b.memid = m.memid)
+                           Join Filter: (b.starttime > m.joindate)
+                           Buffers: shared hit=152
+                           ->  Seq Scan on bookings b  (cost=0.00..351.20 rows=20220 width=24) (actual time=0.013..1.045 rows=20220 loops=1)
+                                 Buffers: shared hit=149
+                           ->  Hash  (cost=4.94..4.94 rows=3 width=24) (actual time=0.061..0.062 rows=5 loops=1)
+                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                 Buffers: shared hit=3
+                                 ->  Seq Scan on members m  (cost=0.00..4.94 rows=3 width=24) (actual time=0.040..0.049 rows=5 loops=1)
+                                       Filter: (joindate > '2025-01-01 00:00:00'::timestamp without time zone)
+                                       Rows Removed by Filter: 150
+                                       Buffers: shared hit=3
+                     ->  Hash  (cost=1.67..1.67 rows=38 width=4) (actual time=0.052..0.052 rows=38 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.67 rows=38 width=4) (actual time=0.024..0.037 rows=38 loops=1)
+                                 Filter: ((membercost >= '0'::numeric) AND (membercost <= '20'::numeric))
+                                 Rows Removed by Filter: 7
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=209
+ Planning Time: 4.958 ms
+ Execution Time: 2.820 ms
+(39 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_memid_starttime ON bookings (memid, starttime);
+CREATE INDEX idx_members_joindate ON members (joindate);
+ANALYZE bookings;
+ANALYZE members;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                             QUERY PLAN                                                                              
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=275.33..275.33 rows=1 width=88) (actual time=0.449..0.450 rows=5 loops=1)
+   Sort Key: (sum(b.slots)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=134
+   ->  GroupAggregate  (cost=273.34..275.32 rows=1 width=88) (actual time=0.408..0.422 rows=5 loops=1)
+         Group Key: m.memid
+         Filter: ((count(b.bookid) >= 3) AND (count(DISTINCT b.facid) > 1))
+         Buffers: shared hit=131
+         ->  Sort  (cost=273.34..273.62 rows=110 width=44) (actual time=0.380..0.385 rows=148 loops=1)
+               Sort Key: m.memid, b.facid
+               Sort Method: quicksort  Memory: 36kB
+               Buffers: shared hit=131
+               ->  Hash Join  (cost=6.88..269.61 rows=110 width=44) (actual time=0.079..0.324 rows=148 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=128
+                     ->  Nested Loop  (cost=4.73..267.09 rows=130 width=44) (actual time=0.046..0.266 rows=180 loops=1)
+                           Buffers: shared hit=127
+                           ->  Seq Scan on members m  (cost=0.00..4.94 rows=3 width=24) (actual time=0.022..0.025 rows=5 loops=1)
+                                 Filter: (joindate > '2025-01-01 00:00:00'::timestamp without time zone)
+                                 Rows Removed by Filter: 150
+                                 Buffers: shared hit=3
+                           ->  Bitmap Heap Scan on bookings b  (cost=4.73..86.95 rows=43 width=24) (actual time=0.007..0.041 rows=36 loops=5)
+                                 Recheck Cond: ((memid = m.memid) AND (starttime > m.joindate))
+                                 Heap Blocks: exact=113
+                                 Buffers: shared hit=124
+                                 ->  Bitmap Index Scan on idx_bookings_memid_starttime  (cost=0.00..4.72 rows=43 width=0) (actual time=0.004..0.004 rows=36 loops=5)
+                                       Index Cond: ((memid = m.memid) AND (starttime > m.joindate))
+                                       Buffers: shared hit=11
+                     ->  Hash  (cost=1.67..1.67 rows=38 width=4) (actual time=0.024..0.024 rows=38 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.67 rows=38 width=4) (actual time=0.010..0.016 rows=38 loops=1)
+                                 Filter: ((membercost >= '0'::numeric) AND (membercost <= '20'::numeric))
+                                 Rows Removed by Filter: 7
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=259
+ Planning Time: 7.151 ms
+ Execution Time: 0.545 ms
+(39 filas)
+
+
+
+
+-----------------------------------------------------------------
+9. Análisis de Tendencia Mensual de Reservas Largas
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                                          QUERY PLAN                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Incremental Sort  (cost=526.00..547.08 rows=137 width=135) (actual time=1.958..2.059 rows=99 loops=1)
+   Sort Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime)), (sum(b.slots)) DESC
+   Presorted Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime))
+   Full-sort Groups: 3  Sort Method: quicksort  Average Memory: 28kB  Peak Memory: 28kB
+   Buffers: shared hit=162
+   ->  GroupAggregate  (cost=525.88..540.92 rows=137 width=135) (actual time=1.854..1.978 rows=99 loops=1)
+         Group Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime)), f.name
+         Filter: (count(b.bookid) > 1)
+         Rows Removed by Filter: 62
+         Buffers: shared hit=156
+         ->  Sort  (cost=525.88..526.91 rows=410 width=91) (actual time=1.837..1.849 rows=415 loops=1)
+               Sort Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime)), f.name, b.memid
+               Sort Method: quicksort  Memory: 50kB
+               Buffers: shared hit=156
+               ->  Hash Join  (cost=2.01..508.09 rows=410 width=91) (actual time=0.056..1.329 rows=415 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=150
+                     ->  Seq Scan on bookings b  (cost=0.00..502.85 rows=410 width=24) (actual time=0.019..1.166 rows=415 loops=1)
+                           Filter: ((slots >= 6) AND (starttime >= '2024-07-01 00:00:00'::timestamp without time zone) AND (starttime <= '2025-06-30 00:00:00'::timestamp without time zone))
+                           Rows Removed by Filter: 19805
+                           Buffers: shared hit=149
+                     ->  Hash  (cost=1.45..1.45 rows=45 width=19) (actual time=0.022..0.022 rows=45 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=19) (actual time=0.009..0.013 rows=45 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=196
+ Planning Time: 3.854 ms
+ Execution Time: 2.143 ms
+(30 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_largas_partial ON bookings (starttime) WHERE slots >= 6;
+ANALYZE bookings;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                                   QUERY PLAN                                                                                    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Incremental Sort  (cost=54.63..75.71 rows=137 width=135) (actual time=1.252..1.353 rows=99 loops=1)
+   Sort Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime)), (sum(b.slots)) DESC
+   Presorted Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime))
+   Full-sort Groups: 3  Sort Method: quicksort  Average Memory: 28kB  Peak Memory: 28kB
+   Buffers: shared hit=181
+   ->  GroupAggregate  (cost=54.51..69.55 rows=137 width=135) (actual time=1.142..1.266 rows=99 loops=1)
+         Group Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime)), f.name
+         Filter: (count(b.bookid) > 1)
+         Rows Removed by Filter: 62
+         Buffers: shared hit=175
+         ->  Sort  (cost=54.51..55.54 rows=410 width=91) (actual time=1.124..1.138 rows=415 loops=1)
+               Sort Key: (EXTRACT(year FROM b.starttime)), (EXTRACT(month FROM b.starttime)), f.name, b.memid
+               Sort Method: quicksort  Memory: 50kB
+               Buffers: shared hit=175
+               ->  Hash Join  (cost=2.29..36.72 rows=410 width=91) (actual time=0.060..0.572 rows=415 loops=1)
+                     Hash Cond: (b.facid = f.facid)
+                     Buffers: shared hit=169
+                     ->  Index Scan using idx_bookings_largas_partial on bookings b  (cost=0.27..31.48 rows=410 width=24) (actual time=0.017..0.404 rows=415 loops=1)
+                           Index Cond: ((starttime >= '2024-07-01 00:00:00'::timestamp without time zone) AND (starttime <= '2025-06-30 00:00:00'::timestamp without time zone))
+                           Buffers: shared hit=168
+                     ->  Hash  (cost=1.45..1.45 rows=45 width=19) (actual time=0.027..0.027 rows=45 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on facilities f  (cost=0.00..1.45 rows=45 width=19) (actual time=0.015..0.018 rows=45 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=227
+ Planning Time: 5.240 ms
+ Execution Time: 1.437 ms
+(29 filas)
+
+
+
+
+-----------------------------------------------------------------
+10. Consulta Compleja de Optimización de Espacios
+-----------------------------------------------------------------
+--- PLAN BASE (SIN ÍNDICES SECUNDARIOS) ---
+                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=2477.33..2477.34 rows=4 width=103) (actual time=12.607..12.611 rows=12 loops=1)
+   Sort Key: (round((((sum(b.slots))::numeric * 100.0) / '750'::numeric), 2)) DESC
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=1941
+   ->  HashAggregate  (cost=464.30..2477.29 rows=4 width=103) (actual time=2.560..12.473 rows=12 loops=1)
+         Group Key: f.facid
+         Filter: (sum(b.slots) > 50)
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=1938
+         ->  Hash Join  (cost=1.71..460.07 rows=563 width=27) (actual time=1.149..1.443 rows=518 loops=1)
+               Hash Cond: (b.facid = f.facid)
+               Buffers: shared hit=150
+               ->  Seq Scan on bookings b  (cost=0.00..452.30 rows=2110 width=12) (actual time=1.076..1.245 rows=2094 loops=1)
+                     Filter: ((starttime >= '2025-06-01'::date) AND (starttime < '2025-07-01 00:00:00'::timestamp without time zone))
+                     Rows Removed by Filter: 18126
+                     Buffers: shared hit=149
+               ->  Hash  (cost=1.56..1.56 rows=12 width=19) (actual time=0.037..0.038 rows=12 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=12 width=19) (actual time=0.015..0.020 rows=12 loops=1)
+                           Filter: (initialoutlay > '5000'::numeric)
+                           Rows Removed by Filter: 33
+                           Buffers: shared hit=1
+         SubPlan 1
+           ->  Aggregate  (cost=503.19..503.20 rows=1 width=32) (actual time=0.910..0.910 rows=1 loops=12)
+                 Buffers: shared hit=1788
+                 ->  Seq Scan on bookings b2  (cost=0.00..502.85 rows=135 width=4) (actual time=0.437..0.895 rows=123 loops=12)
+                       Filter: ((starttime >= '2025-03-01 00:00:00'::timestamp without time zone) AND (starttime < '2025-06-01'::date) AND (facid = f.facid))
+                       Rows Removed by Filter: 20097
+                       Buffers: shared hit=1788
+ Planning:
+   Buffers: shared hit=182
+ Planning Time: 5.150 ms
+ Execution Time: 12.799 ms
+(34 filas)
+
+
+--- ÍNDICE CREADO ---
+CREATE INDEX idx_bookings_facid_starttime_slots ON bookings (facid, starttime) INCLUDE (slots, bookid);
+VACUUM ANALYZE bookings;
+
+--- PLAN OPTIMIZADO (CON ÍNDICE) ---
+                                                                                  QUERY PLAN                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=106.49..106.50 rows=4 width=103) (actual time=0.612..0.614 rows=12 loops=1)
+   Sort Key: (round((((sum(b.slots))::numeric * 100.0) / '750'::numeric), 2)) DESC
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=67
+   ->  HashAggregate  (cost=75.56..106.45 rows=4 width=103) (actual time=0.383..0.570 rows=12 loops=1)
+         Group Key: f.facid
+         Filter: (sum(b.slots) > 50)
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=64
+         ->  Nested Loop  (cost=0.29..71.34 rows=563 width=27) (actual time=0.117..0.273 rows=518 loops=1)
+               Buffers: shared hit=32
+               ->  Seq Scan on facilities f  (cost=0.00..1.56 rows=12 width=19) (actual time=0.017..0.025 rows=12 loops=1)
+                     Filter: (initialoutlay > '5000'::numeric)
+                     Rows Removed by Filter: 33
+                     Buffers: shared hit=1
+               ->  Index Only Scan using idx_bookings_facid_starttime_slots on bookings b  (cost=0.29..5.34 rows=47 width=12) (actual time=0.014..0.017 rows=43 loops=12)
+                     Index Cond: ((facid = f.facid) AND (starttime >= '2025-06-01'::date) AND (starttime < '2025-07-01 00:00:00'::timestamp without time zone))
+                     Heap Fetches: 0
+                     Buffers: shared hit=31
+         SubPlan 1
+           ->  Aggregate  (cost=7.67..7.67 rows=1 width=32) (actual time=0.017..0.017 rows=1 loops=12)
+                 Buffers: shared hit=32
+                 ->  Index Only Scan using idx_bookings_facid_starttime_slots on bookings b2  (cost=0.29..7.32 rows=135 width=4) (actual time=0.007..0.013 rows=123 loops=12)
+                       Index Cond: ((facid = f.facid) AND (starttime >= '2025-03-01 00:00:00'::timestamp without time zone) AND (starttime < '2025-06-01'::date))
+                       Heap Fetches: 0
+                       Buffers: shared hit=32
+ Planning:
+   Buffers: shared hit=219
+ Planning Time: 4.693 ms
+ Execution Time: 0.712 ms
+(30 filas)
+
+
+

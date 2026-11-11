@@ -1,7 +1,5 @@
-﻿# ============================================================================
-# TALLER PRÁCTICO: BACKUP Y RESTORE EN POSTGRESQL (U6)
+# Taller práctico: backup y restore en postgresql (u6)
 # Paso 2: Backups Lógicos con pg_dump (4 formatos y opciones) y pg_dumpall
-# ============================================================================
 
 $env:PGPASSWORD = "postgres"
 $pgBin = "C:\Program Files\PostgreSQL\16\bin"
@@ -25,3 +23,4 @@ New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 
 # 4. Comparar tamaños de los respaldos generados
 Get-ChildItem $backupDir | Select-Object Name, Length
+

@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: BACKUP Y RESTORE EN POSTGRESQL (U6)
+-- Taller práctico: backup y restore en postgresql (u6)
 -- Paso 4: Configuración de WAL, Puntos de Restauración (PITR) y Monitoreo
--- ============================================================================
 
 \c tienda
 
@@ -36,3 +34,4 @@ SELECT
     last_failed_wal,
     stats_reset
 FROM pg_stat_archiver;
+

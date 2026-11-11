@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER DE COMANDOS BÁSICOS DE POSTGRESQL CON PSQL (U6)
+-- Taller de comandos básicos de postgresql con psql (u6)
 -- Secciones 1 a 4 y Ejercicio 1 / Ejercicio 2 (Creación de taller_test y usuarios)
--- ============================================================================
 
 -- Ejercicio 1: Conexión y Exploración
 \l
@@ -35,3 +33,4 @@ INSERT INTO usuarios (nombre, email) VALUES
 
 SELECT * FROM usuarios LIMIT 10;
 EXPLAIN SELECT * FROM usuarios;
+

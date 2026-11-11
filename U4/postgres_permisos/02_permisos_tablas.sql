@@ -1,11 +1,9 @@
--- =====================================================================
 -- 02_PERMISOS_TABLAS.SQL
 -- Permisos a nivel de ESQUEMA y de TABLA / SECUENCIA
 --   Esquema:   USAGE (ver/usar objetos), CREATE (crear objetos)
 --   Tabla:     SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES,
 --              TRIGGER  (y MAINTAIN desde PG17)
 --   Secuencia: USAGE, SELECT, UPDATE
--- =====================================================================
 
 \connect mydatabase
 

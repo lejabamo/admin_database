@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: VACUUM Y ANALYZE EN POSTGRESQL
+-- Taller práctico: vacuum y analyze en postgresql
 -- Parte 2: Configuración del Entorno
--- ============================================================================
 
 \c postgres
 DROP DATABASE IF EXISTS taller_vacuum WITH (FORCE);
@@ -61,3 +59,4 @@ SELECT
 FROM generate_series(1,5000) AS g;
 
 SELECT pg_stat_force_next_flush();
+

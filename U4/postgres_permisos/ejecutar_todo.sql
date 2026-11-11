@@ -1,8 +1,6 @@
--- =====================================================================
 -- EJECUTAR_TODO.SQL
 -- Ejecuta los scripts en orden. Desde la carpeta de los archivos:
 --     psql -U postgres -f ejecutar_todo.sql
--- =====================================================================
 \set ON_ERROR_STOP on
 
 \i 00_preparacion.sql

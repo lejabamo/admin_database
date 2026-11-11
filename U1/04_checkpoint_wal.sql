@@ -1,10 +1,8 @@
--- ============================================================
 -- 04_checkpoint_wal.sql
 -- Objetivo: entender la configuracion de checkpoints y WAL,
 -- que impactan directamente el I/O de escritura.
--- ============================================================
 
-\echo '=== 1. Parametros de checkpoint ==='
+\echo '--- 1. Parametros de checkpoint ---'
 SELECT name, setting, unit, short_desc
 FROM pg_settings
 WHERE name IN (
@@ -18,7 +16,7 @@ WHERE name IN (
 ORDER BY name;
 
 \echo ''
-\echo '=== 2. Parametros de WAL / durabilidad ==='
+\echo '--- 2. Parametros de WAL / durabilidad ---'
 SELECT name, setting, unit, short_desc
 FROM pg_settings
 WHERE name IN (
@@ -33,11 +31,11 @@ WHERE name IN (
 ORDER BY name;
 
 \echo ''
-\echo '=== 3. Ultimo checkpoint ejecutado y motivo ==='
+\echo '--- 3. Ultimo checkpoint ejecutado y motivo ---'
 SELECT * FROM pg_control_checkpoint();
 
 \echo ''
-\echo '=== 4. Autovacuum: parametros basicos ==='
+\echo '--- 4. Autovacuum: parametros basicos ---'
 SELECT name, setting, unit, short_desc
 FROM pg_settings
 WHERE name IN (

@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: GESTIÓN DE USUARIOS, ROLES Y PERMISOS EN POSTGRESQL
+-- Taller práctico: gestión de usuarios, roles y permisos en postgresql
 -- Sección 9: Script de Limpieza
--- ============================================================================
 
 \c postgres
 
@@ -13,3 +11,4 @@ DROP ROLE IF EXISTS carlos, maria, pedro, ana;
 DROP ROLE IF EXISTS gerentes, desarrolladores, analistas, lectores;
 DROP ROLE IF EXISTS usuario_app, admin_bd, desarrollador, desarrollador_senior;
 DROP ROLE IF EXISTS grupo_desarrolladores, grupo_lectores;
+

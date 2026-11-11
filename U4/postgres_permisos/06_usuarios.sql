@@ -1,4 +1,3 @@
--- =====================================================================
 -- 06_USUARIOS.SQL
 -- Usuarios con LOGIN y asignación de roles.
 --   CREATE USER = CREATE ROLE ... WITH LOGIN
@@ -6,7 +5,6 @@
 --
 -- Contraseñas: cámbielas. En psql es más seguro usar  \password usuario
 -- para que la clave no quede en el historial ni en los logs.
--- =====================================================================
 
 \connect mydatabase
 

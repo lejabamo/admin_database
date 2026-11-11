@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: VACUUM Y ANALYZE EN POSTGRESQL
+-- Taller práctico: vacuum y analyze en postgresql
 -- Partes 4 y 5: Configuración de Autovacuum, Vista de Monitoreo y Escenarios
--- ============================================================================
 
 \c taller_vacuum
 
@@ -82,3 +80,4 @@ FROM pg_stat_all_tables
 WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
   AND n_live_tup >= 100
 ORDER BY n_dead_tup DESC;
+

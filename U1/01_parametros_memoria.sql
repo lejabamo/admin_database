@@ -1,14 +1,12 @@
--- ============================================================
 -- 01_parametros_memoria.sql
 -- Objetivo: revisar los parametros de memoria mas importantes
 -- de una instancia PostgreSQL y su valor actual.
--- ============================================================
 
-\echo '=== 1. Version del servidor ==='
+\echo '--- 1. Version del servidor ---'
 SELECT version();
 
 \echo ''
-\echo '=== 2. Parametros de memoria compartida y de trabajo ==='
+\echo '--- 2. Parametros de memoria compartida y de trabajo ---'
 SELECT
     name,
     setting,
@@ -33,7 +31,7 @@ WHERE name IN (
 ORDER BY name;
 
 \echo ''
-\echo '=== 3. Memoria estimada total reservada por shared_buffers + wal_buffers ==='
+\echo '--- 3. Memoria estimada total reservada por shared_buffers + wal_buffers ---'
 SELECT
     pg_size_pretty(
         (SELECT setting::bigint * 8192 FROM pg_settings WHERE name = 'shared_buffers')
@@ -41,7 +39,7 @@ SELECT
     (SELECT setting FROM pg_settings WHERE name = 'wal_buffers') AS wal_buffers_raw;
 
 \echo ''
-\echo '=== 4. Uso actual de work_mem potencial (conexiones activas x work_mem) ==='
+\echo '--- 4. Uso actual de work_mem potencial (conexiones activas x work_mem) ---'
 SELECT
     count(*) AS conexiones_activas,
     (SELECT setting FROM pg_settings WHERE name='work_mem') AS work_mem_kb,
@@ -52,7 +50,7 @@ FROM pg_stat_activity
 WHERE state = 'active';
 
 \echo ''
-\echo '=== 5. Parametros que requieren REINICIO vs solo RELOAD ==='
+\echo '--- 5. Parametros que requieren REINICIO vs solo RELOAD ---'
 SELECT name, setting, context
 FROM pg_settings
 WHERE context IN ('postmaster','sighup')

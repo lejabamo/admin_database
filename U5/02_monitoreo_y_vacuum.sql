@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: VACUUM Y ANALYZE EN POSTGRESQL
+-- Taller práctico: vacuum y analyze en postgresql
 -- Parte 3: Ejercicios Prácticos (Monitoreo, Bloat, VACUUM, VACUUM FULL y ANALYZE)
--- ============================================================================
 
 \c taller_vacuum
 

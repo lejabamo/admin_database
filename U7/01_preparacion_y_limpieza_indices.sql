@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER DE OPTIMIZACIÓN DE CONSULTAS (U7 - UNIVALLE)
+-- Taller de optimización de consultas (u7 - univalle)
 -- 01: Preparación del Entorno y Bloque de Limpieza de Índices Secundarios
--- ============================================================================
 
 -- 1. Crear base de datos exercises y actualizar estadísticas tras restaurar el dump
 -- CREATE DATABASE exercises;
@@ -26,3 +24,4 @@ BEGIN
   END LOOP;
 END $$;
 VACUUM ANALYZE;
+

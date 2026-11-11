@@ -1,4 +1,3 @@
--- =====================================================================
 -- 01_PERMISOS_BASE_DATOS.SQL
 -- Permisos a nivel de BASE DE DATOS: CONNECT, TEMPORARY, CREATE
 --   CONNECT    -> poder conectarse a la base
@@ -7,7 +6,6 @@
 --
 -- Recuerde: para leer una tabla se necesita permiso en los 3 niveles:
 --   BASE DE DATOS (CONNECT) -> ESQUEMA (USAGE) -> TABLA (SELECT...)
--- =====================================================================
 
 \connect mydatabase
 

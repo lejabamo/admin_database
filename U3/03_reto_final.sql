@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER: PARTICIONAMIENTO Y CARGA DE DATOS EN POSTGRESQL 15+
+-- Taller: particionamiento y carga de datos en postgresql 15+
 -- Reto Final: Combinar particionamiento por LIST y carga masiva con COPY
--- ============================================================================
 
 \c taller_particiones
 \timing on

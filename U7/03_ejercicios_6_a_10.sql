@@ -1,13 +1,9 @@
--- ============================================================================
--- TALLER DE OPTIMIZACIÓN DE CONSULTAS (U7 - UNIVALLE)
+-- Taller de optimización de consultas (u7 - univalle)
 -- 03: Ejercicios 6 a 10 (Recursividad, Index Only Scan, Parciales y Subconsultas)
--- ============================================================================
 
 \c exercises
 
--- ============================================================================
 -- EJERCICIO 6: Consulta de Relaciones de Recomendación Recursiva
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_starttime_date;
 CREATE INDEX idx_bookings_facid_starttime ON bookings (facid, starttime);
 CREATE INDEX idx_members_recommendedby ON members (recommendedby);
@@ -37,9 +33,7 @@ GROUP BY r.nivel
 HAVING COUNT(b.bookid) > 0
 ORDER BY r.nivel;
 
--- ============================================================================
 -- EJERCICIO 7: Análisis de Rentabilidad por Instalación (Index Only Scan)
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_facid_starttime;
 DROP INDEX IF EXISTS idx_members_recommendedby;
 
@@ -64,9 +58,7 @@ GROUP BY f.facid, f.name, f.initialoutlay, f.monthlymaintenance
 HAVING SUM(b.slots) > 20
 ORDER BY ganancia_neta DESC;
 
--- ============================================================================
 -- EJERCICIO 8: Consulta de Miembros por Patrón de Uso
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_covering_ej7;
 
 CREATE INDEX idx_bookings_memid_starttime ON bookings (memid, starttime);
@@ -95,9 +87,7 @@ HAVING COUNT(b.bookid) >= 3
    AND COUNT(DISTINCT b.facid) > 1
 ORDER BY total_slots DESC;
 
--- ============================================================================
 -- EJERCICIO 9: Análisis de Tendencia Mensual de Reservas Largas (Índice Parcial)
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_memid_starttime;
 DROP INDEX IF EXISTS idx_members_joindate;
 
@@ -122,9 +112,7 @@ GROUP BY EXTRACT(YEAR FROM b.starttime),
 HAVING COUNT(b.bookid) > 1
 ORDER BY año, mes, total_slots DESC;
 
--- ============================================================================
 -- EJERCICIO 10: Consulta Compleja de Optimización de Espacios
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_largas_partial;
 
 CREATE INDEX idx_bookings_facid_starttime_slots ON bookings (facid, starttime) INCLUDE (slots, bookid);
@@ -150,3 +138,4 @@ WHERE b.starttime >= DATE '2025-06-01'
 GROUP BY f.facid, f.name
 HAVING SUM(b.slots) > 50
 ORDER BY porcentaje_uso DESC;
+

@@ -1,9 +1,7 @@
--- =====================================================================
 -- 08_LIMPIEZA.SQL
 -- Revoca y elimina todo lo creado (para volver a empezar).
 -- Muestra el procedimiento correcto para borrar un rol que tiene
 -- objetos o permisos: REASSIGN OWNED + DROP OWNED + DROP ROLE.
--- =====================================================================
 
 -- ---------------------------------------------------------------------
 -- Ejemplo: eliminar UN usuario que tiene objetos/permisos en la base.

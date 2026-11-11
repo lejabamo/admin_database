@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: COLLATION Y TABLESPACE EN POSTGRESQL (WINDOWS)
+-- Taller práctico: collation y tablespace en postgresql (windows)
 -- Sección 5: Ejercicio integral - empresa_multinacional
--- ============================================================================
 
 \c postgres
 

@@ -1,4 +1,3 @@
--- =====================================================================
 -- 00_PREPARACION.SQL
 -- Crea el rol propietario, la base de datos, el esquema y objetos de
 -- ejemplo (tablas, funciones y procedimientos) sobre los que luego
@@ -6,7 +5,6 @@
 --
 -- Ejecutar como superusuario:   psql -U postgres -f 00_preparacion.sql
 -- Probado en PostgreSQL 16 (compatible con 15+; ver notas por versión)
--- =====================================================================
 
 -- ---------------------------------------------------------------------
 -- 1. Rol DUEÑO de los objetos (sin login).

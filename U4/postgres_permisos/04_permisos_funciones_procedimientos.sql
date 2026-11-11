@@ -1,4 +1,3 @@
--- =====================================================================
 -- 04_PERMISOS_FUNCIONES_PROCEDIMIENTOS.SQL
 -- Permiso EXECUTE sobre funciones (SELECT fn()) y procedimientos (CALL sp())
 --
@@ -8,7 +7,6 @@
 --
 --  SECURITY INVOKER (defecto): se ejecuta con permisos de quien llama.
 --  SECURITY DEFINER          : se ejecuta con permisos del dueño.
--- =====================================================================
 
 \connect mydatabase
 

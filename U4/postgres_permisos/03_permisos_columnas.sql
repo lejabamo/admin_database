@@ -1,4 +1,3 @@
--- =====================================================================
 -- 03_PERMISOS_COLUMNAS.SQL
 -- Permisos a nivel de COLUMNA: SELECT, INSERT, UPDATE, REFERENCES
 --   GRANT SELECT (col1, col2) ON tabla TO rol;
@@ -11,7 +10,6 @@
 --    por eso el orden es: 1) REVOKE tabla  2) GRANT columnas.
 --  * Con permisos de columna, "SELECT *" falla; hay que nombrar columnas.
 --  * Un UPDATE ... WHERE id = x necesita también SELECT sobre "id".
--- =====================================================================
 
 \connect mydatabase
 

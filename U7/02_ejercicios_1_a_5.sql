@@ -1,13 +1,9 @@
--- ============================================================================
--- TALLER DE OPTIMIZACIÓN DE CONSULTAS (U7 - UNIVALLE)
+-- Taller de optimización de consultas (u7 - univalle)
 -- 02: Ejercicios 1 a 5 (Comparación EXPLAIN ANALYZE BUFFERS Antes y Después)
--- ============================================================================
 
 \c exercises
 
--- ============================================================================
 -- EJERCICIO 1: Consulta de Reservas por Rango de Fechas con Agregaciones
--- ============================================================================
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT f.name,
        COUNT(b.bookid) as total_reservas,
@@ -37,9 +33,7 @@ GROUP BY f.facid, f.name
 HAVING COUNT(b.bookid) > 3
 ORDER BY total_reservas DESC;
 
--- ============================================================================
 -- EJERCICIO 2: Búsqueda de Miembros con Patrones de Texto y Recomendaciones
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_starttime_slots;
 ANALYZE bookings;
 
@@ -76,9 +70,7 @@ WHERE (m1.surname LIKE 'Smith%' OR m1.firstname LIKE 'J%')
 GROUP BY m1.memid, m1.firstname, m1.surname, m2.firstname, m2.surname
 ORDER BY total_reservas DESC;
 
--- ============================================================================
 -- EJERCICIO 3: Análisis de Costos vs Utilización
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_memid;
 ANALYZE bookings;
 
@@ -121,9 +113,7 @@ GROUP BY f.facid, f.name, f.membercost, f.guestcost
 HAVING SUM(b.slots) > 10
 ORDER BY ingresos_estimados DESC;
 
--- ============================================================================
 -- EJERCICIO 4: Consulta de Miembros Activos por Zona Geográfica
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_facid_starttime;
 ANALYZE bookings;
 
@@ -162,9 +152,7 @@ GROUP BY m.zipcode
 HAVING COUNT(b.bookid) > 1
 ORDER BY total_reservas DESC;
 
--- ============================================================================
 -- EJERCICIO 5: Análisis Temporal de Horarios Pico
--- ============================================================================
 DROP INDEX IF EXISTS idx_bookings_starttime_memid;
 DROP INDEX IF EXISTS idx_members_joindate;
 ANALYZE bookings;
@@ -189,3 +177,4 @@ GROUP BY EXTRACT(HOUR FROM b.starttime),
          f.name
 HAVING COUNT(b.bookid) > 1
 ORDER BY slots_totales DESC;
+

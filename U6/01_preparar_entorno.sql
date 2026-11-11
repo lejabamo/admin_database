@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: BACKUP Y RESTORE EN POSTGRESQL (U6)
+-- Taller práctico: backup y restore en postgresql (u6)
 -- Paso 1: Preparar la base de datos de práctica 'tienda' (50 000 pedidos)
--- ============================================================================
 
 \c postgres
 DROP DATABASE IF EXISTS tienda WITH (FORCE);
@@ -61,3 +59,4 @@ FROM pg_stat_user_tables
 ORDER BY pg_total_relation_size(schemaname||'.'||relname) DESC;
 
 SELECT pg_size_pretty(pg_database_size('tienda')) AS tamano_base_tienda;
+

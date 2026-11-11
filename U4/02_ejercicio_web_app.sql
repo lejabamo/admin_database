@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: GESTIÓN DE USUARIOS, ROLES Y PERMISOS EN POSTGRESQL
+-- Taller práctico: gestión de usuarios, roles y permisos en postgresql
 -- Sección 10: Ejercicio Práctico 1 - Estructura para Aplicación Web
--- ============================================================================
 
 \c empresa_db
 
@@ -46,3 +44,4 @@ FROM information_schema.role_table_grants
 WHERE grantee IN ('web_app', 'web_user', 'web_admin')
 GROUP BY grantee, table_name
 ORDER BY grantee, table_name;
+

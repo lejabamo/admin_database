@@ -1,7 +1,5 @@
--- ============================================================================
--- TALLER PRÁCTICO: BACKUP Y RESTORE EN POSTGRESQL (U6)
+-- Taller práctico: backup y restore en postgresql (u6)
 -- Paso 3: Simulación de pérdida de tabla (DROP TABLE ... CASCADE) y verificación
--- ============================================================================
 
 \c tienda
 
@@ -13,3 +11,4 @@ WHERE conrelid = 'ventas.pedidos'::regclass AND contype = 'f';
 
 -- Simulamos el error humano: borrado accidental con CASCADE
 DROP TABLE public.clientes CASCADE;
+

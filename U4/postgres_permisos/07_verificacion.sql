@@ -1,7 +1,5 @@
--- =====================================================================
 -- 07_VERIFICACION.SQL
 -- Consultas para revisar quién tiene qué permiso, y pruebas.
--- =====================================================================
 
 \connect mydatabase
 
